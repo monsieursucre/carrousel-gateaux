@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carrousel Gâteaux">
+<meta name="theme-color" content="#2a1042">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Carrousel des Gâteaux</title>
+<style>
+  :root{
+    --bg1:#3a1259; --bg2:#1b0830; --gold:#ffd35c; --gold2:#ff9d2e;
+    --pink:#ff5fa2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
+  html,body{margin:0; height:100%; overflow:hidden;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:radial-gradient(120% 90% at 50% 0%, var(--bg1), var(--bg2));
+    color:#fff; height:100dvh; display:flex; flex-direction:column;
+    align-items:center; justify-content:space-between;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    touch-action:manipulation;
+  }
+  body::before{
+    content:""; position:fixed; inset:-30% -10% auto -10%; height:70%;
+    background:radial-gradient(closest-side, rgba(255,211,92,.16), transparent 70%);
+    animation:float 6s ease-in-out infinite; pointer-events:none;
+  }
+  @keyframes float{50%{transform:translateY(20px) scale(1.1);}}
+
+  header{padding:20px 0 4px; text-align:center;}
+  .title{
+    font-size:27px; font-weight:900; letter-spacing:.5px; line-height:1.05;
+    background:linear-gradient(180deg,#fff,#ffd9ec);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .subtitle{font-size:11px; color:#ffc7e3; letter-spacing:3px; margin-top:6px; font-weight:700;}
+
+  /* le carrousel (horizontal) */
+  .stage{position:relative; width:100%; flex:0 0 auto; margin:8px 0;}
+  .pointer{
+    position:absolute; left:50%; top:-6px; transform:translateX(-50%); z-index:6;
+    width:0; height:0; border-left:13px solid transparent; border-right:13px solid transparent;
+    border-top:18px solid var(--gold);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));
+  }
+  .pointer.bottom{top:auto; bottom:-6px; border-top:none; border-bottom:18px solid var(--gold);}
+  .track-wrap{
+    position:relative; width:100%; height:168px; overflow:hidden;
+    background:linear-gradient(180deg,#2a0f3f,#3a1556);
+    border-top:3px solid rgba(255,211,92,.7); border-bottom:3px solid rgba(255,211,92,.7);
+    box-shadow:inset 0 8px 22px rgba(0,0,0,.55);
+  }
+  /* dégradés sur les bords pour l'effet "fenêtre" */
+  .track-wrap::before,.track-wrap::after{
+    content:""; position:absolute; top:0; bottom:0; width:70px; z-index:4; pointer-events:none;
+  }
+  .track-wrap::before{left:0;  background:linear-gradient(90deg,#23103a,transparent);}
+  .track-wrap::after{right:0; background:linear-gradient(270deg,#23103a,transparent);}
+  .center-band{
+    position:absolute; left:50%; top:0; bottom:0; width:120px; transform:translateX(-50%);
+    z-index:3; pointer-events:none;
+    box-shadow:inset 0 0 0 3px rgba(255,95,162,.55);
+    border-radius:14px;
+  }
+  .track{position:absolute; top:0; left:0; display:flex; height:100%; will-change:transform;}
+  .cake-card{
+    width:120px; height:100%; flex:0 0 120px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:74px;
+  }
+
+  /* bouton */
+  .controls{display:flex; flex-direction:column; align-items:center; gap:10px; padding:6px 0 18px;}
+  .spin{
+    appearance:none; border:none; cursor:pointer;
+    font-size:22px; font-weight:900; letter-spacing:1px; color:#5a1200;
+    padding:18px 54px; border-radius:40px;
+    background:linear-gradient(180deg,var(--gold),var(--gold2));
+    box-shadow:0 10px 0 #b85d00, 0 16px 26px rgba(0,0,0,.4);
+    transition:transform .06s, box-shadow .06s;
+  }
+  .spin:active{transform:translateY(7px); box-shadow:0 3px 0 #b85d00, 0 6px 14px rgba(0,0,0,.4);}
+  .spin:disabled{filter:saturate(.5) brightness(.9);}
+  .hint{font-size:13px; color:#ffd9ec; font-weight:600;}
+
+  /* écran du gagnant */
+  .reveal{
+    position:fixed; inset:0; z-index:30; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px;
+    background:rgba(15,4,32,.78); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .35s;
+  }
+  .reveal.show{opacity:1; pointer-events:auto;}
+  .reveal-won{
+    font-size:24px; font-weight:900; letter-spacing:2px;
+    background:linear-gradient(180deg,#fff,var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .prize{
+    font-size:170px; line-height:1; cursor:grab; touch-action:none;
+    transform:scale(.3); transition:transform .45s cubic-bezier(.2,1.5,.4,1);
+    filter:drop-shadow(0 16px 24px rgba(0,0,0,.55));
+  }
+  .reveal.show .prize{transform:scale(1);}
+  .prize:active{cursor:grabbing;}
+  .prize.dragging{transition:none;}
+  .prize-name{font-size:20px; font-weight:800; color:#ffd9ec;}
+  .pull-hint{font-size:13px; color:#ffb3da; font-weight:600; opacity:.9;}
+  .again{
+    appearance:none; border:2px solid rgba(255,255,255,.5); cursor:pointer;
+    background:rgba(255,255,255,.12); color:#fff; font-weight:800; font-size:16px;
+    padding:12px 32px; border-radius:30px; margin-top:4px;
+  }
+  .again:active{transform:scale(.96);}
+
+  .fx{position:fixed; width:74px; height:92px; z-index:60; background:transparent;}
+  #zR{top:0; right:0;}
+  #zL{top:0; left:0;}
+  #hN{
+    position:fixed; top:3px; right:6px; z-index:70; pointer-events:none;
+    font-size:11px; font-weight:800; line-height:1; opacity:0; transition:opacity .12s;
+  }
+  #hN.on{opacity:1;}
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">🎠 CARROUSEL<br>DES GÂTEAUX</div>
+    <div class="subtitle">M O N S I E U R&nbsp;&nbsp;S U C R E</div>
+  </header>
+
+  <div class="stage">
+    <div class="pointer"></div>
+    <div class="track-wrap">
+      <div class="center-band"></div>
+      <div class="track" id="track"></div>
+    </div>
+    <div class="pointer bottom"></div>
+  </div>
+
+  <div class="controls">
+    <button class="spin" id="spin">TOURNER</button>
+    <div class="hint">Le carrousel s'arrête sur un gâteau 🎂</div>
+  </div>
+
+  <!-- écran gagnant -->
+  <div class="reveal" id="reveal">
+    <div class="reveal-won">GAGNÉ&nbsp;!</div>
+    <div class="prize" id="prize">🍩</div>
+    <div class="prize-name" id="prizeName">Donut chocolat</div>
+    <div class="pull-hint">✋ Tire le gâteau pour le sortir de l'écran</div>
+    <button class="again" id="again">RECOMMENCER</button>
+  </div>
+
+  <div class="fx" id="zR"></div>
+  <div class="fx" id="zL"></div>
+  <div id="hN"></div>
+
+<script>
+(function(){
+  const CAKES = ["🍩","🧁","🍰","🎂","🥐","🍪","🍮","🥧"];
+  const NAMES = {
+    "🍩":"Donut chocolat","🧁":"Cupcake","🍰":"Part de gâteau","🎂":"Gâteau",
+    "🥐":"Croissant","🍪":"Cookie","🍮":"Flan","🥧":"Tarte"
+  };
+
+  let aR = false;      
+  let fX = null;       
+  let tC = 0;          
+  let spinning = false;
+
+  const track = document.getElementById('track');
+  const wrap = track.parentElement;
+  const spinBtn = document.getElementById('spin');
+  const reveal = document.getElementById('reveal');
+  const prize = document.getElementById('prize');
+  const prizeName = document.getElementById('prizeName');
+  const hN = document.getElementById('hN');
+  const CARD = 120;
+
+  function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
+
+  function rfH(){
+    if(aR){ hN.textContent = (fX!=null) ? CAKES[fX] : '★'; hN.classList.add('on'); }
+    else { hN.classList.remove('on'); hN.textContent=''; }
+  }
+
+  function pick(){ return CAKES[Math.floor(Math.random()*CAKES.length)]; }
+
+  function buildTrack(winIndex, winSym){
+    const N = winIndex + 8;
+    track.innerHTML = '';
+    let prev = null;
+    for(let i=0;i<N;i++){
+      let sym;
+      if(i===winIndex){
+        sym = winSym;
+      } else {
+        do { sym = pick(); }
+        while(sym===prev || sym===winSym);
+      }
+      const c = document.createElement('div');
+      c.className = 'cake-card';
+      c.textContent = sym;
+      track.appendChild(c);
+      prev = sym;
+    }
+  }
+
+  function doSpin(){
+    if(spinning) return;
+    spinning = true; spinBtn.disabled = true;
+
+    const winSym = aR ? (fX!=null ? CAKES[fX] : pick()) : pick();
+    const winIndex = 34 + Math.floor(Math.random()*5); 
+    buildTrack(winIndex, winSym);
+
+    const wrapW = wrap.clientWidth;
+    const target = wrapW/2 - winIndex*CARD - CARD/2;
+
+    const FAST = 8000, SLOW = 2000;
+    const nearTarget = target + CARD*1.35; 
+
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0px)';
+    void track.offsetHeight; 
+    track.style.transition = 'transform '+FAST+'ms cubic-bezier(.10,.78,.20,1)';
+    track.style.transform = 'translateX('+nearTarget+'px)';
+    vibrate(8);
+
+    setTimeout(()=>{
+      track.style.transition = 'transform '+SLOW+'ms cubic-bezier(.33,.05,.25,1)';
+      track.style.transform = 'translateX('+target+'px)';
+    }, FAST);
+
+    setTimeout(()=>{
+      showPrize(winSym);
+      aR = false; fX = null; tC = 0; rfH(); 
+      spinning = false; spinBtn.disabled = false;
+    }, FAST + SLOW + 80);
+  }
+
+  function showPrize(sym){
+    prize.textContent = sym;
+    prize.style.transform = '';      
+    prize.style.opacity = '1';
+    prizeName.textContent = NAMES[sym] || '';
+    reveal.classList.add('show');
+    vibrate([0,25,50,25]);
+  }
+
+  document.getElementById('again').addEventListener('click', ()=>{
+    reveal.classList.remove('show');
+    prize.style.transform=''; prize.style.opacity='1';
+  });
+  spinBtn.addEventListener('click', doSpin);
+
+  let drag = null;
+  function onDown(e){
+    e.preventDefault();
+    const p = e.touches ? e.touches[0] : e;
+    drag = {x0:p.clientX, y0:p.clientY, dx:0, dy:0};
+    prize.classList.add('dragging');
+  }
+  function onMove(e){
+    if(!drag) return;
+    e.preventDefault();
+    const p = e.touches ? e.touches[0] : e;
+    drag.dx = p.clientX - drag.x0;
+    drag.dy = p.clientY - drag.y0;
+    const rot = Math.max(-25, Math.min(25, drag.dx*0.06));
+    prize.style.transform = 'translate('+drag.dx+'px,'+drag.dy+'px) rotate('+rot+'deg)';
+  }
+  function onUp(){
+    if(!drag) return;
+    prize.classList.remove('dragging');
+    const dist = Math.hypot(drag.dx, drag.dy);
+    if(dist > 110){
+      const len = dist || 1;
+      const ux = drag.dx/len, uy = drag.dy/len;
+      const far = (window.innerWidth + window.innerHeight);
+      const fx = ux*far, fy = uy*far;
+      const rot = Math.max(-90, Math.min(90, drag.dx*0.2));
+      prize.style.transition = 'transform .55s cubic-bezier(.4,0,.7,1), opacity .55s ease-in';
+      prize.style.transform = 'translate('+fx+'px,'+fy+'px) rotate('+rot+'deg)';
+      prize.style.opacity = '0';
+      vibrate([0,15,30,15,30,40]);
+      setTimeout(()=>{ prize.style.transition=''; }, 600);
+    } else {
+      prize.style.transition = 'transform .3s cubic-bezier(.2,1.4,.4,1)';
+      prize.style.transform = '';
+      setTimeout(()=>{ prize.style.transition=''; }, 320);
+    }
+    drag = null;
+  }
+  prize.addEventListener('touchstart', onDown, {passive:false});
+  prize.addEventListener('touchmove', onMove, {passive:false});
+  prize.addEventListener('touchend', onUp);
+  prize.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+
+  const zR = document.getElementById('zR');
+  const zL = document.getElementById('zL');
+  function rgR(e){
+    e.preventDefault();
+    tC++;
+    aR = true;
+    fX = (tC>=1 && tC<=CAKES.length) ? (tC-1) : null;
+    vibrate(18);
+    rfH();
+  }
+  function rgL(e){
+    e.preventDefault();
+    aR=false; fX=null; tC=0;
+    vibrate([0,40]);
+    rfH();
+  }
+  zR.addEventListener('touchstart', rgR, {passive:false});
+  zR.addEventListener('mousedown', rgR);
+  zL.addEventListener('touchstart', rgL, {passive:false});
+  zL.addEventListener('mousedown', rgL);
+
+  document.addEventListener('gesturestart', e=>e.preventDefault());
+  document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+
+  buildTrack(36, "🍩");
+  track.style.transform = 'translateX('+(wrap.clientWidth/2 - 2*CARD - CARD/2)+'px)';
+})();
+</script>
+</body>
+</html>
