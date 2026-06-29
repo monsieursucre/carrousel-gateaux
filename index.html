@@ -401,22 +401,22 @@
 
   const zR = document.getElementById('zR');
   const zL = document.getElementById('zL');
-  function rgR(e){            
+  function rgL(e){
     e.preventDefault();
     rigged = true;
     vibrate(18);
     rfH();
   }
-  function rgL(e){            
+  function rgR(e){
     e.preventDefault();
     rigged = false;
     vibrate([0,40]);
     rfH();
   }
-  zR.addEventListener('touchstart', rgR, {passive:false});
-  zR.addEventListener('mousedown', rgR);
   zL.addEventListener('touchstart', rgL, {passive:false});
   zL.addEventListener('mousedown', rgL);
+  zR.addEventListener('touchstart', rgR, {passive:false});
+  zR.addEventListener('mousedown', rgR);
 
   document.addEventListener('gesturestart', e=>e.preventDefault());
   document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
