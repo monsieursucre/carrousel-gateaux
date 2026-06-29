@@ -253,8 +253,8 @@
 
   // pluie de confettis (gâteaux + étoiles)
   function rainConfetti(){
-    const pieces = ["🍩","🎉","⭐️","🍫","✨","🧁","🍬"];
-    for(let i=0;i<34;i++){
+    const pieces = ["🎉","⭐️","🍫","✨","🧁","🍬","🍭"];
+    for(let i=0;i<22;i++){
       const c = document.createElement('div');
       c.className = 'confetti';
       c.textContent = pieces[Math.floor(Math.random()*pieces.length)];
@@ -288,9 +288,10 @@
       if(i===winIndex){
         sym = winSym;
       } else {
-        // jamais la même icône dans 3 cases d'affilée, et jamais le gagnant ailleurs
+        // jamais la même icône dans 3 cases d'affilée, jamais le gagnant ailleurs,
+        // et en mode libre le donut n'apparaît pas du tout
         do { sym = pick(); }
-        while(sym===p1 || sym===p2 || sym===winSym);
+        while(sym===p1 || sym===p2 || sym===winSym || (!rigged && sym===DONUT));
       }
       const c = document.createElement('div');
       c.className = 'cake-card';
@@ -336,7 +337,8 @@
     prizeName.textContent = NAMES[sym] || '';
     reveal.classList.add('show');
     vibrate([0,25,50,25]);
-    if(sym === DONUT){ playVictory(); rainConfetti(); }   // fanfare + confettis pour le donut
+    rainConfetti();                       // petite animation confetti à chaque résultat
+    if(sym === DONUT) playVictory();      // fanfare en plus, seulement pour le donut
   }
 
   document.getElementById('again').addEventListener('click', ()=>{
@@ -420,7 +422,7 @@
     window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
   }
 
-  buildTrack(36, "🍩");
+  buildTrack(36, "🎂");   // affichage au repos (mode libre) : pas de donut
   track.style.transform = 'translateX('+(wrap.clientWidth/2 - 2*CARD - CARD/2)+'px)';
 })();
 </script>
