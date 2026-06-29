@@ -337,8 +337,7 @@
     prizeName.textContent = NAMES[sym] || '';
     reveal.classList.add('show');
     vibrate([0,25,50,25]);
-    rainConfetti();                       // petite animation confetti à chaque résultat
-    if(sym === DONUT) playVictory();      // fanfare en plus, seulement pour le donut
+    if(sym === DONUT){ rainConfetti(); playVictory(); }
   }
 
   document.getElementById('again').addEventListener('click', ()=>{
