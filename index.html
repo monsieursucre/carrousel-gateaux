@@ -225,25 +225,20 @@
     const wrapW = wrap.clientWidth;
     const target = wrapW/2 - winIndex*CARD - CARD/2;
 
-    const FAST = 8000, SLOW = 2000;
-    const nearTarget = target + CARD*1.35; 
+    const duration = 10000;
 
     track.style.transition = 'none';
     track.style.transform = 'translateX(0px)';
-    void track.offsetHeight; 
-    track.style.transition = 'transform '+FAST+'ms cubic-bezier(.10,.78,.20,1)';
-    track.style.transform = 'translateX('+nearTarget+'px)';
+    void track.offsetHeight;
+    // une seule décélération continue (easeOutExpo) : aucun regain de vitesse à la fin
+    track.style.transition = 'transform '+duration+'ms cubic-bezier(0.16, 1, 0.3, 1)';
+    track.style.transform = 'translateX('+target+'px)';
     vibrate(8);
-
-    setTimeout(()=>{
-      track.style.transition = 'transform '+SLOW+'ms cubic-bezier(.33,.05,.25,1)';
-      track.style.transform = 'translateX('+target+'px)';
-    }, FAST);
 
     setTimeout(()=>{
       showPrize(winSym);
       spinning = false; spinBtn.disabled = false;
-    }, FAST + SLOW + 80);
+    }, duration + 80);
   }
 
   function showPrize(sym){
