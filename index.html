@@ -186,6 +186,40 @@
 
   function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
 
+  // ---- audio (fanfare de victoire, synthétisée -> aucun fichier) ----
+  let audioCtx = null;
+  function unlockAudio(){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+    }catch(e){}
+  }
+  function beep(freq, start, dur, vol, type){
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || 'triangle';
+    o.frequency.value = freq;
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.start(start); o.stop(start + dur + 0.02);
+  }
+  function playVictory(){
+    if(!audioCtx) return;
+    const t = audioCtx.currentTime + 0.02;
+    // petite montée joyeuse : Do - Mi - Sol - Do aigu
+    const melody = [[523.25,0.00],[659.25,0.12],[783.99,0.24],[1046.50,0.40]];
+    melody.forEach(([f,dt])=> beep(f, t+dt, 0.18, 0.22, 'triangle'));
+    // accord final tenu + petites étincelles aiguës
+    beep(1046.50, t+0.56, 0.5, 0.20, 'triangle');
+    beep(1318.51, t+0.56, 0.5, 0.12, 'triangle');
+    beep(1567.98, t+0.66, 0.35, 0.10, 'sine');
+    beep(2093.00, t+0.74, 0.30, 0.07, 'sine');
+    // petite basse pour le corps
+    beep(130.81, t+0.40, 0.4, 0.18, 'sine');
+  }
+
   function rfH(){
     if(rigged){ hN.textContent = DONUT; hN.classList.add('on'); }
     else { hN.classList.remove('on'); hN.textContent=''; }
@@ -249,13 +283,16 @@
     prizeName.textContent = NAMES[sym] || '';
     reveal.classList.add('show');
     vibrate([0,25,50,25]);
+    if(sym === DONUT) playVictory();   // fanfare uniquement pour le donut
   }
 
   document.getElementById('again').addEventListener('click', ()=>{
     reveal.classList.remove('show');
     prize.style.transform=''; prize.style.opacity='1';
   });
-  spinBtn.addEventListener('click', doSpin);
+  spinBtn.addEventListener('click', ()=>{ unlockAudio(); doSpin(); });
+  // filet de sécurité : débloque aussi l'audio au tout premier contact
+  window.addEventListener('touchstart', unlockAudio, {once:true});
 
   let drag = null;
   function onDown(e){
