@@ -336,8 +336,12 @@
     prize.style.opacity = '1';
     prizeName.textContent = NAMES[sym] || '';
     reveal.classList.add('show');
-    vibrate([0,25,50,25]);
-    if(sym === DONUT){ rainConfetti(); playVictory(); }
+    if(sym === DONUT){
+      vibrate([0,60,80,60,80,60,120]);
+      rainConfetti(); playVictory();
+    } else {
+      vibrate([0,25,50,25]);
+    }
   }
 
   document.getElementById('again').addEventListener('click', ()=>{
