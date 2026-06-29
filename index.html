@@ -223,11 +223,10 @@
     buildTrack(winIndex, winSym);
 
     const wrapW = wrap.clientWidth;
-    // hasard sur l'arrêt : le gâteau se cale un peu à gauche/droite (mais reste sous le repère)
-    const jitter = (Math.random()*2 - 1) * 34;
-    const target = wrapW/2 - winIndex*CARD - CARD/2 + jitter;
+    const target = wrapW/2 - winIndex*CARD - CARD/2;   // arrêt pile au centre du repère
 
-    const duration = 10000;
+    // le hasard est sur la DURÉE (et la distance via winIndex), pas sur la position finale
+    const duration = 9000 + Math.floor(Math.random()*2500);
 
     track.style.transition = 'none';
     track.style.transform = 'translateX(0px)';
