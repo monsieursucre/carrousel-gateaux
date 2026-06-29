@@ -223,7 +223,9 @@
     buildTrack(winIndex, winSym);
 
     const wrapW = wrap.clientWidth;
-    const target = wrapW/2 - winIndex*CARD - CARD/2;
+    // hasard sur l'arrêt : le gâteau se cale un peu à gauche/droite (mais reste sous le repère)
+    const jitter = (Math.random()*2 - 1) * 34;
+    const target = wrapW/2 - winIndex*CARD - CARD/2 + jitter;
 
     const duration = 10000;
 
