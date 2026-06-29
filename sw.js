@@ -1,5 +1,5 @@
 // Service worker — met l'app en cache pour qu'elle marche 100% hors-ligne.
-const CACHE = 'carrousel-gateaux-v13';
+const CACHE = 'carrousel-gateaux-v14';
 const ASSETS = [
   './',
   './index.html',
