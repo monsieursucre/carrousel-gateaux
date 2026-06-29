@@ -129,6 +129,9 @@
     font-size:11px; font-weight:800; line-height:1; opacity:0; transition:opacity .12s;
   }
   #hN.on{opacity:1;}
+
+  /* confettis de victoire (au-dessus de l'écran gagnant) */
+  .confetti{position:fixed; top:-44px; z-index:40; pointer-events:none; will-change:transform,opacity;}
 </style>
 </head>
 <body>
@@ -220,6 +223,52 @@
     beep(130.81, t+0.40, 0.4, 0.18, 'sine');
   }
 
+  // un "tic" sec quand une carte passe sous le repère
+  function tick(when){
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.value = 1100;
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(0.10, when + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.045);
+    o.start(when); o.stop(when + 0.06);
+  }
+  // programme un tic à chaque case franchie (de plus en plus espacés -> ralentit avec la roue)
+  function scheduleTicks(totalDist, durationMs){
+    if(!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    const N = Math.floor(totalDist / CARD);
+    for(let k=1;k<=N;k++){
+      const fr = (k*CARD)/totalDist;
+      if(fr >= 1) break;
+      // inverse de l'easing easeOutExpo -> instant où la case franchit le centre
+      const tt = -Math.log(1-fr)/(10*Math.LN2);
+      tick(t0 + tt*(durationMs/1000));
+    }
+  }
+
+  // pluie de confettis (gâteaux + étoiles)
+  function rainConfetti(){
+    const pieces = ["🍩","🎉","⭐️","🍫","✨","🧁","🍬"];
+    for(let i=0;i<34;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.textContent = pieces[Math.floor(Math.random()*pieces.length)];
+      c.style.left = (Math.random()*100) + 'vw';
+      c.style.fontSize = (18 + Math.random()*18) + 'px';
+      const dur = 1600 + Math.random()*1700;
+      c.style.transition = 'transform '+dur+'ms linear, opacity '+dur+'ms ease-in';
+      document.body.appendChild(c);
+      requestAnimationFrame(()=>{
+        c.style.transform = 'translateY(115vh) rotate('+(Math.random()*720-360)+'deg)';
+        c.style.opacity = '0';
+      });
+      setTimeout(()=>c.remove(), dur+120);
+    }
+  }
+
   function rfH(){
     if(rigged){ hN.textContent = DONUT; hN.classList.add('on'); }
     else { hN.classList.remove('on'); hN.textContent=''; }
@@ -269,6 +318,7 @@
     track.style.transition = 'transform '+duration+'ms cubic-bezier(0.16, 1, 0.3, 1)';
     track.style.transform = 'translateX('+target+'px)';
     vibrate(8);
+    scheduleTicks(Math.abs(target), duration);   // bruits de défilement (ralentissent avec la roue)
 
     setTimeout(()=>{
       showPrize(winSym);
@@ -283,7 +333,7 @@
     prizeName.textContent = NAMES[sym] || '';
     reveal.classList.add('show');
     vibrate([0,25,50,25]);
-    if(sym === DONUT) playVictory();   // fanfare uniquement pour le donut
+    if(sym === DONUT){ playVictory(); rainConfetti(); }   // fanfare + confettis pour le donut
   }
 
   document.getElementById('again').addEventListener('click', ()=>{
