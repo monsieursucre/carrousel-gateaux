@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Carrousel Gâteaux">
-<meta name="theme-color" content="#2a1042">
+<meta name="theme-color" content="#3a1259">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -18,9 +18,11 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
   html,body{margin:0; height:100%; overflow:hidden;}
+  /* le fond couvre tout l'écran (barre d'état en haut + indicateur en bas) */
+  html{ background:radial-gradient(120% 90% at 50% 0%, var(--bg1), var(--bg2)) var(--bg2) no-repeat; }
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:radial-gradient(120% 90% at 50% 0%, var(--bg1), var(--bg2));
+    background:transparent;
     color:#fff; height:100dvh; display:flex; flex-direction:column;
     align-items:center; justify-content:space-between;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
@@ -151,7 +153,6 @@
 
   <!-- écran gagnant -->
   <div class="reveal" id="reveal">
-    <div class="reveal-won">GAGNÉ&nbsp;!</div>
     <div class="prize" id="prize">🍩</div>
     <div class="prize-name" id="prizeName">Donut chocolat</div>
     <div class="pull-hint">✋ Tire le gâteau pour le sortir de l'écran</div>
@@ -170,9 +171,8 @@
     "🥐":"Croissant","🍪":"Cookie","🍮":"Flan","🥧":"Tarte"
   };
 
-  let aR = false;      
-  let fX = null;       
-  let tC = 0;          
+  const DONUT = "🍩";
+  let rigged = false;   
   let spinning = false;
 
   const track = document.getElementById('track');
@@ -187,11 +187,12 @@
   function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
 
   function rfH(){
-    if(aR){ hN.textContent = (fX!=null) ? CAKES[fX] : '★'; hN.classList.add('on'); }
+    if(rigged){ hN.textContent = DONUT; hN.classList.add('on'); }
     else { hN.classList.remove('on'); hN.textContent=''; }
   }
 
   function pick(){ return CAKES[Math.floor(Math.random()*CAKES.length)]; }
+  function pickNonDonut(){ let s; do { s = pick(); } while(s===DONUT); return s; }
 
   function buildTrack(winIndex, winSym){
     const N = winIndex + 8;
@@ -217,8 +218,8 @@
     if(spinning) return;
     spinning = true; spinBtn.disabled = true;
 
-    const winSym = aR ? (fX!=null ? CAKES[fX] : pick()) : pick();
-    const winIndex = 34 + Math.floor(Math.random()*5); 
+    const winSym = rigged ? DONUT : pickNonDonut();
+    const winIndex = 34 + Math.floor(Math.random()*5);
     buildTrack(winIndex, winSym);
 
     const wrapW = wrap.clientWidth;
@@ -241,7 +242,6 @@
 
     setTimeout(()=>{
       showPrize(winSym);
-      aR = false; fX = null; tC = 0; rfH(); 
       spinning = false; spinBtn.disabled = false;
     }, FAST + SLOW + 80);
   }
@@ -274,8 +274,10 @@
     const p = e.touches ? e.touches[0] : e;
     drag.dx = p.clientX - drag.x0;
     drag.dy = p.clientY - drag.y0;
+    const dist = Math.hypot(drag.dx, drag.dy);
+    const grow = 1 + Math.min(dist/240, 0.85);   // grossit progressivement jusqu'à ~1.85x
     const rot = Math.max(-25, Math.min(25, drag.dx*0.06));
-    prize.style.transform = 'translate('+drag.dx+'px,'+drag.dy+'px) rotate('+rot+'deg)';
+    prize.style.transform = 'translate('+drag.dx+'px,'+drag.dy+'px) rotate('+rot+'deg) scale('+grow.toFixed(3)+')';
   }
   function onUp(){
     if(!drag) return;
@@ -288,7 +290,7 @@
       const fx = ux*far, fy = uy*far;
       const rot = Math.max(-90, Math.min(90, drag.dx*0.2));
       prize.style.transition = 'transform .55s cubic-bezier(.4,0,.7,1), opacity .55s ease-in';
-      prize.style.transform = 'translate('+fx+'px,'+fy+'px) rotate('+rot+'deg)';
+      prize.style.transform = 'translate('+fx+'px,'+fy+'px) rotate('+rot+'deg) scale(1.9)';
       prize.style.opacity = '0';
       vibrate([0,15,30,15,30,40]);
       setTimeout(()=>{ prize.style.transition=''; }, 600);
@@ -308,17 +310,15 @@
 
   const zR = document.getElementById('zR');
   const zL = document.getElementById('zL');
-  function rgR(e){
+  function rgR(e){            
     e.preventDefault();
-    tC++;
-    aR = true;
-    fX = (tC>=1 && tC<=CAKES.length) ? (tC-1) : null;
+    rigged = true;
     vibrate(18);
     rfH();
   }
-  function rgL(e){
+  function rgL(e){            
     e.preventDefault();
-    aR=false; fX=null; tC=0;
+    rigged = false;
     vibrate([0,40]);
     rfH();
   }
