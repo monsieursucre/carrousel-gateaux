@@ -99,6 +99,11 @@
     opacity:0; pointer-events:none; transition:opacity .35s;
   }
   .reveal.show{opacity:1; pointer-events:auto;}
+  @keyframes bgFlash{
+    0%,100%{ background-color:rgba(15,4,32,.78); }
+    50%{ background-color:rgba(255,159,46,.6); }
+  }
+  .reveal.flash{ animation:bgFlash .3s ease-in-out 10; }
   .reveal-won{
     font-size:24px; font-weight:900; letter-spacing:2px;
     background:linear-gradient(180deg,#fff,var(--gold));
@@ -337,6 +342,8 @@
     if(sym === DONUT){
       vibrate([0,40,40,40,40,40,40,40,40,40,60,40,60,40,80,60,150]);
       rainConfetti(); playVictory();
+      reveal.classList.add('flash');
+      setTimeout(()=>reveal.classList.remove('flash'), 3200);
     } else {
       vibrate([0,25,50,25]);
     }
