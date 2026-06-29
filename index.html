@@ -122,7 +122,6 @@
   .again:active{transform:scale(.96);}
 
   .fx{position:fixed; width:74px; height:92px; z-index:60; background:transparent;}
-  #zR{top:0; right:0;}
   #zL{top:0; left:0;}
   #hN{
     position:fixed; top:3px; right:6px; z-index:70; pointer-events:none;
@@ -162,7 +161,6 @@
     <button class="again" id="again">RECOMMENCER</button>
   </div>
 
-  <div class="fx" id="zR"></div>
   <div class="fx" id="zL"></div>
   <div id="hN"></div>
 
@@ -399,24 +397,15 @@
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
 
-  const zR = document.getElementById('zR');
   const zL = document.getElementById('zL');
   function rgL(e){
     e.preventDefault();
-    rigged = true;
-    vibrate(18);
-    rfH();
-  }
-  function rgR(e){
-    e.preventDefault();
-    rigged = false;
-    vibrate([0,40]);
+    rigged = !rigged;
+    vibrate(rigged ? 18 : [0,40]);
     rfH();
   }
   zL.addEventListener('touchstart', rgL, {passive:false});
   zL.addEventListener('mousedown', rgL);
-  zR.addEventListener('touchstart', rgR, {passive:false});
-  zR.addEventListener('mousedown', rgR);
 
   document.addEventListener('gesturestart', e=>e.preventDefault());
   document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
