@@ -168,10 +168,12 @@
 
 <script>
 (function(){
-  const CAKES = ["🍩","🧁","🍰","🎂","🥐","🍪","🍮","🥧"];
+  const CAKES = ["🍩","🧁","🍰","🎂","🥐","🍪","🍮","🥧","🍫","🍬","🍭","🍡","🥮","🧇","🥞","🍦","🍨","🍧"];
   const NAMES = {
     "🍩":"Donut chocolat","🧁":"Cupcake","🍰":"Part de gâteau","🎂":"Gâteau",
-    "🥐":"Croissant","🍪":"Cookie","🍮":"Flan","🥧":"Tarte"
+    "🥐":"Croissant","🍪":"Cookie","🍮":"Flan","🥧":"Tarte",
+    "🍫":"Chocolat","🍬":"Bonbon","🍭":"Sucette","🍡":"Dango","🥮":"Mooncake",
+    "🧇":"Gaufre","🥞":"Pancakes","🍦":"Glace","🍨":"Coupe glacée","🍧":"Granité"
   };
 
   const DONUT = "🍩";
@@ -280,20 +282,21 @@
   function buildTrack(winIndex, winSym){
     const N = winIndex + 8;
     track.innerHTML = '';
-    let prev = null;
+    let p1 = null, p2 = null;   // les deux cartes précédentes
     for(let i=0;i<N;i++){
       let sym;
       if(i===winIndex){
         sym = winSym;
       } else {
+        // jamais la même icône dans 3 cases d'affilée, et jamais le gagnant ailleurs
         do { sym = pick(); }
-        while(sym===prev || sym===winSym);
+        while(sym===p1 || sym===p2 || sym===winSym);
       }
       const c = document.createElement('div');
       c.className = 'cake-card';
       c.textContent = sym;
       track.appendChild(c);
-      prev = sym;
+      p2 = p1; p1 = sym;
     }
   }
 
