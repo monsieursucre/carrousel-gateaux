@@ -196,10 +196,28 @@
 
   // ---- audio (fanfare de victoire, synthétisée -> aucun fichier) ----
   let audioCtx = null;
+  let silentEl = null;
   function unlockAudio(){
+    try{
+      // iOS 16.4+ : force le son en mode "lecture" -> audible même bouton silencieux
+      if(navigator.audioSession){ navigator.audioSession.type = 'playback'; }
+    }catch(e){}
     try{
       if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if(audioCtx.state === 'suspended') audioCtx.resume();
+    }catch(e){}
+    // secours anciens iOS : un court audio media (silencieux) bascule la session
+    // audio en catégorie "playback", ce qui ignore le bouton silencieux
+    try{
+      if(!silentEl){
+        silentEl = new Audio(
+          "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQ4AAAAAAAAAAAAAAAAAAAAAAAA="
+        );
+        silentEl.loop = true;
+        silentEl.setAttribute('playsinline','');
+        silentEl.volume = 0.001;
+      }
+      silentEl.play().catch(()=>{});
     }catch(e){}
   }
   function beep(freq, start, dur, vol, type){
